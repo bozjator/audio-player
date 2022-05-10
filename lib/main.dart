@@ -1,3 +1,4 @@
+import 'package:audio_player/core/services/app_audio_handler.dart';
 import 'package:audio_player/core/theme/dark_theme.dart';
 import 'package:audio_player/core/theme/light_theme.dart';
 import 'package:audio_player/screens/home/home_controller.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 void main() {
+  AppAudioHandler().init();
   initControllers();
   runApp(const MyApp());
 }
