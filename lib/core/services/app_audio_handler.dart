@@ -11,6 +11,8 @@ class AppAudioHandler {
 
   AppAudioHandler._internal();
 
+  static MediaItem? currentItem;
+  static Duration? currentItemDuration;
   late final AudioPlayer _player;
 
   void init() async {
@@ -26,35 +28,69 @@ class AppAudioHandler {
     _player.playbackEventStream.listen((event) {},
         onError: (Object e, StackTrace stackTrace) {
       if (kDebugMode) {
-        print('A stream error occurred: $e');
+        print("---------------------------------------------------");
+        print('WE HAVE A STREAM ERROR: $e');
+        print("---------------------------------------------------");
+      }
+    });
+    _player.playerStateStream.listen((state) {
+      switch (state.processingState) {
+        case ProcessingState.idle:
+          print("Is idle");
+          break;
+        case ProcessingState.loading:
+          print("Is loading");
+          break;
+        case ProcessingState.buffering:
+          print("Is buffering");
+          break;
+        case ProcessingState.ready:
+          print("Is ready");
+          break;
+        case ProcessingState.completed:
+          print("Is completed");
+          break;
       }
     });
   }
 
   void dispose() {
+    currentItem = null;
+    currentItemDuration = null;
     _player.dispose();
   }
 
-  void play() {
+  void setAudioSource(MediaItem item, Uri sourceUri) async {
     final audioSource = AudioSource.uri(
-      Uri.parse("https://s3.amazonaws.com/scifri-segments/scifri201711241.mp3"),
-      tag: MediaItem(
-        id: 'unique-id-1',
-        album: "Science Friday",
-        title: "From Cat Rheology To Operatic Incompetence",
-        artUri: Uri.parse(
-            "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg"),
-      ),
+      sourceUri,
+      tag: item,
     );
-    _player.setAudioSource(audioSource);
-
-    // option 2
-    //var duration = await _player.setUrl('https://foo.com/bar.mp3');
-
-    _player.play();
+    currentItem = item;
+    currentItemDuration = await _player.setAudioSource(audioSource);
   }
 
-  void stop() {
-    _player.stop();
+  void play() async {
+    await _player.play();
+  }
+
+  void stop() async {
+    await _player.pause();
+    await _player.seek(Duration.zero);
+  }
+
+  void pause() async {
+    await _player.pause();
+  }
+
+  void skipForward() async {
+    final currentPosition = _player.position;
+    final seekPosition = currentPosition + const Duration(seconds: 5);
+    await _player.seek(seekPosition);
+  }
+
+  void skipBackward() async {
+    final currentPosition = _player.position;
+    final seekPosition = currentPosition - const Duration(seconds: 5);
+    await _player.seek(seekPosition);
   }
 }
