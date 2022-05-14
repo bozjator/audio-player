@@ -11,7 +11,7 @@ class AppAudioHandler {
 
   AppAudioHandler._internal();
 
-  final _player = AudioPlayer();
+  late final AudioPlayer _player;
 
   void init() async {
     await JustAudioBackground.init(
@@ -19,6 +19,8 @@ class AppAudioHandler {
       androidNotificationChannelName: 'Audio playback',
       androidNotificationOngoing: true,
     );
+
+    _player = AudioPlayer();
 
     // Listen to errors during playback.
     _player.playbackEventStream.listen((event) {},
