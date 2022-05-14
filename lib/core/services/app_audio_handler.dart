@@ -1,11 +1,8 @@
-import 'package:audio_service/audio_service.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
-class AppAudioHandler extends BaseAudioHandler
-    with
-        QueueHandler, // mix in default queue callback implementations
-        SeekHandler // mix in default seek callback implementations
-{
+class AppAudioHandler {
   static final AppAudioHandler _singleton = AppAudioHandler._internal();
 
   factory AppAudioHandler() {
@@ -14,43 +11,48 @@ class AppAudioHandler extends BaseAudioHandler
 
   AppAudioHandler._internal();
 
-  late AppAudioHandler appAudioHandler;
+  final _player = AudioPlayer();
 
   void init() async {
-    appAudioHandler = await AudioService.init(
-      builder: () => AppAudioHandler(),
-      config: const AudioServiceConfig(
-        androidNotificationChannelId:
-            'com.bozjatorium.audioplayer.channel.audio',
-        androidNotificationChannelName: 'Music playback',
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'com.bozjatorium.channel.audio',
+      androidNotificationChannelName: 'Audio playback',
+      androidNotificationOngoing: true,
+    );
+
+    // Listen to errors during playback.
+    _player.playbackEventStream.listen((event) {},
+        onError: (Object e, StackTrace stackTrace) {
+      if (kDebugMode) {
+        print('A stream error occurred: $e');
+      }
+    });
+  }
+
+  void dispose() {
+    _player.dispose();
+  }
+
+  void play() {
+    final audioSource = AudioSource.uri(
+      Uri.parse("https://s3.amazonaws.com/scifri-segments/scifri201711241.mp3"),
+      tag: MediaItem(
+        id: 'unique-id-1',
+        album: "Science Friday",
+        title: "From Cat Rheology To Operatic Incompetence",
+        artUri: Uri.parse(
+            "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg"),
       ),
     );
+    _player.setAudioSource(audioSource);
+
+    // option 2
+    //var duration = await _player.setUrl('https://foo.com/bar.mp3');
+
+    _player.play();
   }
 
-  AudioPlayer audioPlayer = AudioPlayer();
-
-  @override
-  Future<void> play() async {
-    // All 'play' requests from all origins route to here. Implement this
-    // callback to start playing audio appropriate to your app. e.g. music.
-    int result =
-        await audioPlayer.play("https://it-dk.com/media-demo/demo-1.mp3");
-    if (result == 1) {
-      print("result success");
-    }
+  void stop() {
+    _player.stop();
   }
-
-  @override
-  Future<void> pause() async {}
-
-  @override
-  Future<void> stop() async {
-    int result = await audioPlayer.stop();
-  }
-
-  @override
-  Future<void> seek(Duration position) async {}
-
-  @override
-  Future<void> skipToQueueItem(int i) async {}
 }
