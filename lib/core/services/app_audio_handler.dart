@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
@@ -11,9 +12,9 @@ class AppAudioHandler {
 
   AppAudioHandler._internal();
 
-  static MediaItem? currentItem;
-  static Duration? currentItemDuration;
   late final AudioPlayer _player;
+  final Rx<MediaItem> currentItem = const MediaItem(id: "", title: "").obs;
+  Duration? currentItemDuration;
 
   void init() async {
     await JustAudioBackground.init(
@@ -33,6 +34,8 @@ class AppAudioHandler {
         print("---------------------------------------------------");
       }
     });
+
+    // Listen to state changes.
     _player.playerStateStream.listen((state) {
       switch (state.processingState) {
         case ProcessingState.idle:
@@ -54,18 +57,12 @@ class AppAudioHandler {
     });
   }
 
-  void dispose() {
-    currentItem = null;
-    currentItemDuration = null;
-    _player.dispose();
-  }
-
   void setAudioSource(MediaItem item, Uri sourceUri) async {
     final audioSource = AudioSource.uri(
       sourceUri,
       tag: item,
     );
-    currentItem = item;
+    currentItem.value = item;
     currentItemDuration = await _player.setAudioSource(audioSource);
   }
 

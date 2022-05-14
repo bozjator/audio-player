@@ -1,3 +1,4 @@
+import 'package:audio_player/core/global_widgets/player_widget.dart';
 import 'package:audio_player/core/services/app_audio_handler.dart';
 import 'package:audio_player/core/theme/dark_theme.dart';
 import 'package:audio_player/core/theme/light_theme.dart';
@@ -29,6 +30,16 @@ class MyApp extends StatelessWidget {
       darkTheme: darkTheme,
       themeMode: ThemeMode.system,
       home: const HomeScreen(),
+      builder: (context, child) {
+        return Stack(
+          children: [
+            if (child != null) child,
+            Obx(
+              () => Player(mediaItem: AppAudioHandler().currentItem.value),
+            )
+          ],
+        );
+      },
     );
   }
 }
